@@ -2,9 +2,6 @@ const express = require("express");
 const authController = require("./../controllers/authController");
 const router = express.Router();
 const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-
-
 
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);

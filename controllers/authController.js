@@ -1,12 +1,13 @@
 const User = require("./../models/User");
 const jwt = require("jsonwebtoken");
 const { promisify } = require("util");
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
-const signToken = (id) => {
+const sendEmail = require("../services/email");
+
+const signToken = (user) => {
+  console.log("here");
   return jwt.sign(
-    { id },
+    { email: user.email, userId: user._id, role: user.role },
 
     process.env.JWT_KEY,
     {
@@ -17,8 +18,19 @@ const signToken = (id) => {
 
 exports.signup = async (req, res, next) => {
   try {
+    //console.log(req.body);
     const newUser = await User.create(req.body);
+    console.log(newUser);
     const token = signToken(newUser._id);
+
+    //Send to user
+    let message = "Welcome on Board";
+
+    await sendEmail({
+      email: req.body.email,
+      subject: "Welcome",
+      message,
+    });
 
     res.status(201).json({
       status: "success",
@@ -58,10 +70,14 @@ exports.login = async (req, res, next) => {
     }
 
     //If everything is fine, send token to client
-    const token = signToken(user._id);
+    //const token = signToken(user._id);
+    const token = signToken(user);
     return res.status(200).json({
-      status: "sucess",
-      token,
+      status: "success",
+      token: token,
+      expiresIn: 3600,
+      userId: user._id,
+      userRole: user.role
     });
   } catch (err) {
     return res.status(401).json({
@@ -74,8 +90,8 @@ exports.protectRoutes = async (req, res, next) => {
   //Get token and check if it is there
   let token;
   if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization 
+    // && req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
   }
@@ -96,8 +112,13 @@ exports.protectRoutes = async (req, res, next) => {
       });
     }
 
-    req.user = user;
-    //Check if user changed password after login
+    //req.user = user;
+    req.userData = {
+      email: decodedToken.email,
+      userId: decodedToken.userId,
+      userRole: decodedToken.role,
+    };
+    
 
     next();
   } catch (err) {
@@ -128,5 +149,3 @@ exports.forgotPassword = async (req, res, next) => {
   }
   //Come back to this
 };
-
-

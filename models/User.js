@@ -11,7 +11,7 @@ const userSchema = mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      //validate: [validator.isEmail, "Please provide a valid email"],
+      validate: [validator.isEmail, "Please provide a valid email"],
     },
     password: {
       type: String,
@@ -43,6 +43,11 @@ const userSchema = mongoose.Schema(
       default: "user",
       enum: ["user", "admin"],
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+      select: false
+    }
   },
   { timestamps: true }
 );
