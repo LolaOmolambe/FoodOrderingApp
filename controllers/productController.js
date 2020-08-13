@@ -7,8 +7,8 @@ exports.createProduct = async (req, res, next) => {
     });
   }
 
-  const { title } = req.body;
-  let { price, genre, description } = req.body;
+  //const { title } = req.body;
+  let { title, price, genre, description } = req.body;
 
   if (!title || !title.trim()) {
     return res.status(400).json({
@@ -105,6 +105,7 @@ exports.getProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
+    //console.log(product);
     if (!product) {
       return res.status(404).json({ message: "Product item not found!" });
     }
@@ -115,7 +116,8 @@ exports.updateProduct = async (req, res, next) => {
       });
     }
 
-    const { price, genre, isAvailable } = req.body;
+    //let { price, genre, isAvailable } = req.body;
+    let { price, genre } = req.body;
     let { title, imagePath, description } = req.body;
 
     if (!title || !title.trim()) {
@@ -145,25 +147,37 @@ exports.updateProduct = async (req, res, next) => {
       const url = req.protocol + "://" + req.get("host");
       imagePath = url + "/images/" + req.file.filename;
     }
+    console.log("hereeee");
 
     let createdProduct = new Product({
+      _id: req.body.id,
       name: title,
       price: price,
       genre: genre,
       description: description,
       imagePath: imagePath,
-      isAvailable: isAvailable,
+      //isAvailable: isAvailable,
+      isAvailable: true,
     });
-
-    let result = await Product.updateOne(
-      { _id: req.params.id },
+    console.log(createdProduct);
+    Product.updateOne(
+      {_id: req.params.id },
       createdProduct
-    );
-    if (result.n > 0) {
-      res.status(200).json({ message: "Product Update successful!" });
-    } else {
-      res.status(401).json({ message: "Product Update unsuccessfull!" });
-    }
+    ).then(result => {
+      console.log(result);
+      if (result.n > 0) {
+        res.status(200).json({ message: "Update successful!" });
+      } else {
+        res.status(401).json({ message: "Not authorized!" });
+      }
+    })
+    console.log("result");
+   
+    // if (result.n > 0) {
+    //   res.status(200).json({ message: "Product Update successful!" });
+    // } else {
+    //   res.status(401).json({ message: "Product Update unsuccessfull!" });
+    // }
   } catch (err) {
     res.status(500).json({
       message: "Couldn't update product!",

@@ -1,15 +1,38 @@
 const User = require("./../models/User");
 
 
-exports.getAllUsers = async (req, res, next) => {
-  const users = await User.find();
+exports.getAllUsers =  (req, res, next) => {
+  const pageSize = +req.query.pagesize;
+  const currentPage = +req.query.page;
 
-  res.status(200).json({
-    status: "success",
-    data: {
-      users,
-    },
-  });
+  const userQuery = User.find().select("+isActive");
+  if (pageSize && currentPage) {
+    userQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  }
+  userQuery
+    .then((documents) => {
+      fetchedUsers = documents;
+      return User.count();
+    })
+    .then((count) => {
+      res.status(200).json({
+        message: "Users fetched successfully!",
+        users: fetchedUsers,
+        maxUsers: count,
+      });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "Fetching users failed!",
+      });
+    });
+
+  // res.status(200).json({
+  //   status: "success",
+  //   data: {
+  //     users,
+  //   },
+  // });
 };
 
 const filterObj = (obj, ...allowedFields) => {
@@ -48,7 +71,22 @@ exports.updateMe = async (req, res, next) => {
 };
 
 exports.deleteUser = async (req, res, next) => {
-  await User.findByIdAndUpdate(req.user.id, { active: false });
+  //await User.findByIdAndUpdate(req.user.id, { active: false });
+  await User.findByIdAndUpdate(req.params.id, { isActive: false });
+
+
+
+  res.status(204).json({
+    status: "success",
+    data: null,
+  });
+};
+
+exports.activateUser = async (req, res, next) => {
+  //await User.findByIdAndUpdate(req.user.id, { active: false });
+  await User.findByIdAndUpdate(req.params.id, { isActive: true });
+
+
 
   res.status(204).json({
     status: "success",

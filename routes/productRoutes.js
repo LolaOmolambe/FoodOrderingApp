@@ -1,5 +1,4 @@
 const express = require("express");
-
 const productController = require("../controllers/productController");
 const authControllers = require("../controllers/authController");
 
@@ -19,8 +18,8 @@ router.get("", productController.getProducts);
 
 router.put(
   "/:id",
-  authControllers.protectRoutes,
-  authControllers.restrictTo("admin"),
+   authControllers.protectRoutes,
+   authControllers.restrictTo("admin"),
   productController.updateProduct
 );
 

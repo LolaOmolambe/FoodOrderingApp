@@ -6,11 +6,13 @@ const passport = require("passport");
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
 
+console.log("authRoutes");
 router.get(
   "/auth/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
   })
+ 
 );
 
 router.get("/auth/google/callback", passport.authenticate("google"));

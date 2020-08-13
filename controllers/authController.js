@@ -1,6 +1,6 @@
 const User = require("./../models/User");
 const jwt = require("jsonwebtoken");
-const { promisify } = require("util");
+//const { promisify } = require("util");
 
 const sendEmail = require("../services/email");
 
@@ -77,7 +77,7 @@ exports.login = async (req, res, next) => {
       token: token,
       expiresIn: 3600,
       userId: user._id,
-      userRole: user.role
+      userRole: user.role,
     });
   } catch (err) {
     return res.status(401).json({
@@ -90,10 +90,11 @@ exports.protectRoutes = async (req, res, next) => {
   //Get token and check if it is there
   let token;
   if (
-    req.headers.authorization 
-    // && req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization
+    && req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
+    //console.log(token);
   }
   if (!token) {
     return res.status(401).json({ message: "You are not authenticated" });
@@ -101,10 +102,11 @@ exports.protectRoutes = async (req, res, next) => {
 
   try {
     //Verify token
-    const decodedToken = await promisify(jwt.verify)(token, process.env.KEY);
+    const decodedToken = jwt.verify(token, process.env.JWT_KEY);
+    //console.log(decodedToken);
 
     //Check if user still exists
-    const user = await User.findById(decodedToken.id);
+    const user = await User.findById(decodedToken.userId);
 
     if (!user) {
       return res.status(401).json({
@@ -112,13 +114,12 @@ exports.protectRoutes = async (req, res, next) => {
       });
     }
 
-    //req.user = user;
+    req.user = user;
     req.userData = {
       email: decodedToken.email,
       userId: decodedToken.userId,
       userRole: decodedToken.role,
     };
-    
 
     next();
   } catch (err) {
