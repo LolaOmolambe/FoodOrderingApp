@@ -20,17 +20,20 @@ exports.signup = async (req, res, next) => {
   try {
     //console.log(req.body);
     const newUser = await User.create(req.body);
-    console.log(newUser);
+    const url = `${req.protocol}://${req.get('host')}/me`;
+    console.log(url);
+    //await new Email(newUser, url).sendWelcome();
+
     const token = signToken(newUser._id);
 
     //Send to user
     let message = "Welcome on Board";
 
-    await sendEmail({
-      email: req.body.email,
-      subject: "Welcome",
-      message,
-    });
+     await sendEmail({
+       email: req.body.email,
+       subject: "Welcome to VegeFoods, we're glad to have you",
+       message,
+     });
 
     res.status(201).json({
       status: "success",
@@ -40,6 +43,7 @@ exports.signup = async (req, res, next) => {
       },
     });
   } catch (err) {
+    console.log(err);
     res.status(500).json({
       message: "Invalid Authorization Credentials",
     });

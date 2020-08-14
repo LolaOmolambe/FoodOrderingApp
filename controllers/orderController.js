@@ -97,3 +97,31 @@ exports.createOrder = async (req, res, next) => {
   //   });
   // }
 };
+
+// exports.getAllOrders = (req, res, next) => {
+//   const pageSize = +req.query.pagesize;
+//   const currentPage = +req.query.page;
+
+//   let ordersQuery = OrderProduct.find();
+
+//   if (pageSize && currentPage) {
+//     ordersQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+//   }
+//   ordersQuery
+//     .then((documents) => {
+//       fetchedProducts = documents;
+//       return Product.count();
+//     })
+//     .then((count) => {
+//       res.status(200).json({
+//         message: "Products fetched successfully!",
+//         products: fetchedProducts,
+//         maxProducts: count,
+//       });
+//     })
+//     .catch((error) => {
+//       res.status(500).json({
+//         message: "Fetching products failed!",
+//       });
+//     });
+// };

@@ -12,6 +12,9 @@ const orderSchema = mongoose.Schema(
       default: "pending",
       enum: ["pending", "processing", "completed"],
     },
+    grandTotal: {
+      type: Number,
+    }
   },
   { timestamps: true }
 );
