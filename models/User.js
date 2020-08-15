@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const { use } = require("../routes/userRoutes");
 //const uniqueValidator = require("mongoose-unique-validator");
 
 const userSchema = mongoose.Schema(
@@ -46,12 +48,14 @@ const userSchema = mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-      select: false
+      select: false,
     },
     googleId: {
       type: String,
-     
-    }
+    },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
   { timestamps: true }
 );
@@ -65,13 +69,55 @@ userSchema.pre("save", async function (next) {
 
   //Delete password confirm
   this.passwordConfirm = undefined;
+  next();
 });
+
+userSchema.pre("save", function (next) {
+  //This only runs if password was modified
+  if (!this.isModified("password") || this.isNew) return next();
+
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+userSchema.pre(/^find/, function(next) {
+
+  //Only get active users
+    this.find({isActive: true});
+    next();
+ });
 
 userSchema.methods.correctPassword = async function (
   inputPassword,
   userPassword
 ) {
   return await bcrypt.compare(inputPassword, userPassword);
+};
+
+userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  console.log("reset ", resetToken);
+
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+  console.log("passwordReset ", this.passwordResetExpires);
+
+  return resetToken;
 };
 
 //userSchema.plugin(uniqueValidator);

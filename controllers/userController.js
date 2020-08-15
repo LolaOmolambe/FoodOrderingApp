@@ -1,7 +1,6 @@
 const User = require("./../models/User");
 
-
-exports.getAllUsers =  (req, res, next) => {
+exports.getAllUsers = (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
 
@@ -62,7 +61,7 @@ exports.updateMe = async (req, res, next) => {
     runValidators: true,
   });
 
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
     data: {
       user: updatedUser,
@@ -74,8 +73,6 @@ exports.deleteUser = async (req, res, next) => {
   //await User.findByIdAndUpdate(req.user.id, { active: false });
   await User.findByIdAndUpdate(req.params.id, { isActive: false });
 
-
-
   res.status(204).json({
     status: "success",
     data: null,
@@ -85,8 +82,6 @@ exports.deleteUser = async (req, res, next) => {
 exports.activateUser = async (req, res, next) => {
   //await User.findByIdAndUpdate(req.user.id, { active: false });
   await User.findByIdAndUpdate(req.params.id, { isActive: true });
-
-
 
   res.status(204).json({
     status: "success",

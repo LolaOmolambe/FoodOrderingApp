@@ -5,8 +5,11 @@ const passport = require("passport");
 
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
+router.post("/forgotPassword", authController.forgotPassword);
+router.patch("/resetPassword/:token", authController.resetPassword);
+router.patch("/updateMyPasssword", authController.protectRoutes, authController.updatePassword);
 
-console.log("authRoutes");
+
 router.get(
   "/auth/google",
   passport.authenticate("google", {

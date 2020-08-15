@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const User = require("./../models/User");
 const jwt = require("jsonwebtoken");
 //const { promisify } = require("util");
@@ -20,7 +21,7 @@ exports.signup = async (req, res, next) => {
   try {
     //console.log(req.body);
     const newUser = await User.create(req.body);
-    const url = `${req.protocol}://${req.get('host')}/me`;
+    const url = `${req.protocol}://${req.get("host")}/me`;
     console.log(url);
     //await new Email(newUser, url).sendWelcome();
 
@@ -29,11 +30,11 @@ exports.signup = async (req, res, next) => {
     //Send to user
     let message = "Welcome on Board";
 
-     await sendEmail({
-       email: req.body.email,
-       subject: "Welcome to VegeFoods, we're glad to have you",
-       message,
-     });
+    await sendEmail({
+      email: req.body.email,
+      subject: "Welcome to VegeFoods, we're glad to have you",
+      message,
+    });
 
     res.status(201).json({
       status: "success",
@@ -52,7 +53,7 @@ exports.signup = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(req.body);
+  //console.log(req.body);
 
   //Chack if email and password exits
   if (!email || !password) {
@@ -64,9 +65,7 @@ exports.login = async (req, res, next) => {
   try {
     //check if user exists and password is correct
     const user = await User.findOne({ email }).select("+password");
-    //console.log(user);
-    //const passwordCorrect = await user.correctPassword(password, user.password);
-    //console.log(passwordCorrect);
+
     if (!user || !(await user.correctPassword(password, user.password))) {
       return res.status(401).json({
         message: "Incorrect email or password",
@@ -94,11 +93,10 @@ exports.protectRoutes = async (req, res, next) => {
   //Get token and check if it is there
   let token;
   if (
-    req.headers.authorization
-    && req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
-    //console.log(token);
   }
   if (!token) {
     return res.status(401).json({ message: "You are not authenticated" });
@@ -107,14 +105,21 @@ exports.protectRoutes = async (req, res, next) => {
   try {
     //Verify token
     const decodedToken = jwt.verify(token, process.env.JWT_KEY);
-    //console.log(decodedToken);
+    console.log(decodedToken);
 
     //Check if user still exists
     const user = await User.findById(decodedToken.userId);
 
     if (!user) {
       return res.status(401).json({
-        message: "Token for this user no longer exists",
+        message: "The user belonging to this token no longer exists",
+      });
+    }
+
+    //Check if user changed password after the token was issued
+    if (user.changePasswordAfter(decodedToken.iat)) {
+      return res.status(401).json({
+        message: "The user recently changed password, pls login again",
       });
     }
 
@@ -137,7 +142,7 @@ exports.restrictTo = (...roles) => {
     //roles is an array
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
-        message: "Not authorized",
+        message: "Not authorized to perform this action",
       });
     }
     next();
@@ -145,6 +150,7 @@ exports.restrictTo = (...roles) => {
 };
 
 exports.forgotPassword = async (req, res, next) => {
+  //Get user baed on Posted email
   const user = await User.findOne({ email: req.body.email });
 
   if (!user) {
@@ -152,5 +158,102 @@ exports.forgotPassword = async (req, res, next) => {
       message: "No user with this email address",
     });
   }
-  //Come back to this
+
+  //Generate the random reset token
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  //Send to the user email
+  const resetURL = `${req.protocol}://${req.get(
+    "host"
+  )}api/user/resetPassword/${resetToken}`;
+
+  const message = `Forgot your password? Submit a PATCH request with your new password
+  and passwordConfirm to : ${resetURL}.\nIf you didn't forget your password,
+  please ignore this email`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Your password reset Token (valid for 10 min",
+      message,
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Token sent to the email",
+    });
+  } catch (err) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+    res.status(500).json({
+      status: "error",
+      message: "There was an error sending the email, Try again",
+    });
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  //Get user based on the token
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  //If token has not expired, and there is user, set the new password
+  if (!user) {
+    return res.status(400).json({
+      message: "Token is invalid or has expired",
+    });
+  }
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  //Update the changePasswordAt for the user
+
+  //Log the user in, send JWT
+  const token = signToken(user);
+
+  return res.status(200).json({
+    status: "success",
+    token: token,
+    expiresIn: 3600,
+    userId: user._id,
+    userRole: user.role,
+  });
+};
+
+exports.updatePassword = async (req, res, next) => {
+  //Get user from collection
+  const user = await User.findById(req.userData.userId).select("+password");
+
+  //Check if current password is correct
+  if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
+    res.status(401).json({ message: "Your current password is wrong" });
+  }
+
+  //If sp, Update password
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  await user.save();
+
+  //Log user in, send jwt
+  const token = signToken(user);
+  return res.status(200).json({
+    status: "success",
+    token: token,
+    expiresIn: 3600,
+    userId: user._id,
+    userRole: user.role,
+  });
+
 };

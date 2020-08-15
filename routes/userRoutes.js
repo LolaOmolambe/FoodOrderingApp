@@ -13,5 +13,10 @@ router.get(
 
 router.get("/deactivateuser/:id", userController.deleteUser);
 router.get("/reactivateuser/:id", userController.activateUser);
+router.patch(
+  "/updateMe",
+  //authControllers.protectRoutes,
+  userController.updateMe
+);
 
 module.exports = router;

@@ -62,20 +62,21 @@ const htmlToText = require("html-to-text");
 
 const sendEmail = async (options) => {
   //1.Create a transporter
+  console.log(process.env.EMAIL_USERNAME);
   const transporter = nodemailer.createTransport({
     service: "Gmail",
     auth: {
-      user: "lola.omolambe@gmail.com",
-      pass: "Invalid2018!",
+      user: process.env.EMAIL_USERNAME,
+      pass: process.env.EMAIL_PASSWORD
     },
   });
 
   //2.define email options
   const mailOptions = {
-      from: 'Lola <hello@jonas.io>',
+      from: 'VegeFoods <hellofromvegefoods@gmail.com>',
       to: options.email,
       subject: options.subject,
-      text: options.message,
+      text: options.message
       
   }
 
