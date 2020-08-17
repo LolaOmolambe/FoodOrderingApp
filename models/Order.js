@@ -9,12 +9,12 @@ const orderSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      default: "pending",
-      enum: ["pending", "processing", "completed"],
+      default: "Pending",
+      enum: ["Pending", "Processing", "Completed"],
     },
     grandTotal: {
       type: Number,
-    }
+    },
   },
   { timestamps: true }
 );

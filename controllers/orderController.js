@@ -28,9 +28,11 @@ exports.createOrder = async (req, res, next) => {
     console.log(item);
     let x = {
       order_id: orders._id,
-      product_id: item.productId,
+      product_id: mongoose.Types.ObjectId(item.productId),
+      customer: mongoose.Types.ObjectId(req.userData.userId),
       product_quantity: item.qty,
       product_price: item.total,
+      
     };
     ordersArray.push(x);
   }
@@ -46,7 +48,7 @@ exports.createOrder = async (req, res, next) => {
     if (err) {
       //return console.error(err);
       return res.status(500).json({
-        message: "Fetching products failed!",
+        message: "Order nor saved!",
       });
     } else {
       console.log("Multiple documents inserted to Collection");
@@ -80,7 +82,7 @@ exports.getAllOrders = async (req, res, next) => {
 
   orderQuery.populate("customer").exec(function (error, result) {
     //console.log(result);
-    
+
     console.log("orders ", countOrders);
     //return res.json(result);
     return res.status(200).json({
@@ -109,30 +111,36 @@ exports.getAllOrders = async (req, res, next) => {
   // });
 };
 
-// exports.getAllOrders = (req, res, next) => {
-//   const pageSize = +req.query.pagesize;
-//   const currentPage = +req.query.page;
+exports.getMyOrders = async (req, res, next) => {
+  const pageSize = +req.query.pagesize;
+  const currentPage = +req.query.page;
 
-//   let ordersQuery = OrderProduct.find();
+  console.log("here");
 
-//   if (pageSize && currentPage) {
-//     ordersQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
-//   }
-//   ordersQuery
-//     .then((documents) => {
-//       fetchedProducts = documents;
-//       return Product.count();
-//     })
-//     .then((count) => {
-//       res.status(200).json({
-//         message: "Products fetched successfully!",
-//         products: fetchedProducts,
-//         maxProducts: count,
-//       });
-//     })
-//     .catch((error) => {
-//       res.status(500).json({
-//         message: "Fetching products failed!",
-//       });
-//     });
-// };
+  //let orderQuery = Order.find({ customer: req.userData.userId});
+  let orderQuery =  OrderProduct.find({ customer: req.userData.userId });
+  
+  var countOrders = await OrderProduct.count({ customer: req.userData.userId });
+  console.log(countOrders);
+
+  if (pageSize && currentPage) {
+    orderQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  }
+  //foreach orderquery, get the order items
+  //foreach
+
+  orderQuery
+    .populate("product_id")
+    .populate("order_id")
+    .exec(function (error, result) {
+      //console.log(result);
+
+      console.log("orders ", result);
+      //return res.json(result);
+      return res.status(200).json({
+        message: "Orders fetched successfully!",
+        orders: result,
+        maxOrders: countOrders,
+      });
+    });
+};

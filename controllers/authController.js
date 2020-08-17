@@ -3,7 +3,8 @@ const User = require("./../models/User");
 const jwt = require("jsonwebtoken");
 //const { promisify } = require("util");
 
-const sendEmail = require("../services/email");
+//const sendEmail = require("../services/email");
+const Email = require("../services/email");
 
 const signToken = (user) => {
   console.log("here");
@@ -30,11 +31,12 @@ exports.signup = async (req, res, next) => {
     //Send to user
     let message = "Welcome on Board";
 
-    await sendEmail({
-      email: req.body.email,
-      subject: "Welcome to VegeFoods, we're glad to have you",
-      message,
-    });
+    // await sendEmail({
+    //   email: req.body.email,
+    //   subject: "Welcome to VegeFoods, we're glad to have you",
+    //   message,
+    // });
+    await new Email(newUser, url).sendWelcome();
 
     res.status(201).json({
       status: "success",
@@ -75,12 +77,12 @@ exports.login = async (req, res, next) => {
     //If everything is fine, send token to client
     //const token = signToken(user._id);
     const token = signToken(user);
-    res.cookie('jwt', token, {
+    res.cookie("jwt", token, {
       expires: new Date(
         Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
       ),
       //secure: true,
-      httpOnly: true
+      httpOnly: true,
     });
 
     return res.status(200).json({
@@ -263,4 +265,46 @@ exports.updatePassword = async (req, res, next) => {
     userId: user._id,
     userRole: user.role,
   });
+};
+
+exports.googleSignIn = async (req, res, next) => {
+  const { email, firstName, lastName } = req.body;
+  console.log(email, firstName, lastName);
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    const token = signToken(existingUser);
+    return res.status(200).json({
+      status: "success",
+      token: token,
+      expiresIn: 3600,
+      userId: existingUser._id,
+      userRole: existingUser.role,
+    });
+  } else {
+    try {
+      const user = await new User({
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+      }).save({ validateBeforeSave: false });
+      
+      const url = `${req.protocol}://${req.get("host")}/me`;
+      console.log(url);
+
+      await new Email(user, url).sendWelcome();
+
+      let token = signToken(user);
+      return res.status(200).json({
+        status: "success",
+        token: token,
+        expiresIn: 3600,
+        userId: user._id,
+        userRole: user.role,
+      });
+    } catch (err) {
+      res.status(500).json({
+        message: "Authentication failed!",
+      });
+    }
+  }
 };
