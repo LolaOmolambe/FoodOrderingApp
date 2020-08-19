@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { use } = require("../routes/userRoutes");
 //const uniqueValidator = require("mongoose-unique-validator");
 
 const userSchema = mongoose.Schema(
@@ -50,7 +49,16 @@ const userSchema = mongoose.Schema(
       default: true,
       select: false,
     },
-    googleId: {
+    phoneNumber: {
+      type: String,
+    },
+    address: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
+    country: {
       type: String,
     },
     passwordChangedAt: Date,
@@ -80,12 +88,12 @@ userSchema.pre("save", function (next) {
   next();
 });
 
-userSchema.pre(/^find/, function(next) {
+// userSchema.pre(/^find/, function(next) {
 
-  //Only get active users
-    this.find({isActive: true});
-    next();
- });
+//   //Only get active users
+//     this.find({isActive: true});
+//     next();
+//  });
 
 userSchema.methods.correctPassword = async function (
   inputPassword,

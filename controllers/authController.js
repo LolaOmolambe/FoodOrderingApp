@@ -243,6 +243,7 @@ exports.resetPassword = async (req, res, next) => {
 };
 
 exports.updatePassword = async (req, res, next) => {
+  console.log(req.body);
   //Get user from collection
   const user = await User.findById(req.userData.userId).select("+password");
 

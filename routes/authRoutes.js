@@ -9,7 +9,7 @@ router.post("/googlelogin", authController.googleSignIn);
 router.post("/forgotPassword", authController.forgotPassword);
 router.patch("/resetPassword/:token", authController.resetPassword);
 router.patch(
-  "/updateMyPasssword",
+  "/updatepassword",
   authController.protectRoutes,
   authController.updatePassword
 );

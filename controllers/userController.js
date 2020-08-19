@@ -4,7 +4,8 @@ exports.getAllUsers = (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
 
-  const userQuery = User.find().select("+isActive");
+  const userQuery = User.find().select("+isActive").sort({createdAt: 'descending'});
+  //let userQuery = User.find();
   if (pageSize && currentPage) {
     userQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
@@ -53,10 +54,13 @@ exports.updateMe = async (req, res, next) => {
       message: "Not for password update",
     });
   }
+  //console.log("user ", req.userData);
+  console.log("body ", req.body);
 
   //update user document
-  const filteredBody = filterObj(req.body, "firstName", "lastName", "email");
-  const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
+  const filteredBody = filterObj(req.body, "firstName", "lastName", "address", "phoneNumber");
+  console.log("filteredbody ",filteredBody);
+  const updatedUser = await User.findByIdAndUpdate(req.userData.userId, filteredBody, {
     new: true,
     runValidators: true,
   });
@@ -87,4 +91,19 @@ exports.activateUser = async (req, res, next) => {
     status: "success",
     data: null,
   });
+};
+
+exports.getUser = async (req, res, next) => {
+  try {
+    let user = await User.findById(req.user.id);
+    if (user) {
+      res.status(200).json(user);
+    } else {
+      res.status(404).json({ message: "User not found!" });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: "Fetching user failed!",
+    });
+  }
 };

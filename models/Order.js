@@ -10,7 +10,7 @@ const orderSchema = mongoose.Schema(
     status: {
       type: String,
       default: "Pending",
-      enum: ["Pending", "Processing", "Completed"],
+      enum: ["Pending","Paid", "Processing", "Completed"],
     },
     grandTotal: {
       type: Number,
