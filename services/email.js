@@ -23,8 +23,10 @@ module.exports = class Email {
     });
   }
 
-  async send(template, subject) {
+  async send(template, subject, message, email) {
     //Send the actual email
+    message = message || "";
+    email = email || "";
     console.log("1");
     //1. Render HTML based on a template
     //res.render('')
@@ -34,6 +36,9 @@ module.exports = class Email {
         firstName: this.firstName,
         url: this.url,
         subject,
+        email,
+        message
+
       }
     );
 
@@ -53,6 +58,10 @@ module.exports = class Email {
 
   async sendWelcome() {
     await this.send("welcome", "Welcome to the VegeFoods Family!");
+  }
+
+  async sendContactMail(subject, message, email) {
+    await this.send("contact", subject, message, email);
   }
 };
 

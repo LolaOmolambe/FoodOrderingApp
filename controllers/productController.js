@@ -36,13 +36,23 @@ exports.createProduct = async (req, res, next) => {
   }
 
   try {
-    const url = req.protocol + "://" + req.get("host");
+    //const url = req.protocol + "://" + req.get("host");
+    // let createdProduct = await new Product({
+    //   name: title,
+    //   price: price,
+    //   genre: genre,
+    //   description: description,
+    //   imagePath: url + "/images/" + req.file.filename,
+    // }).save();
+    console.log("file ", req.file);
+    console.log("file url", req.file.url);
+
     let createdProduct = await new Product({
       name: title,
       price: price,
       genre: genre,
       description: description,
-      imagePath: url + "/images/" + req.file.filename,
+      imagePath: req.file.url,
     }).save();
 
     res.status(201).json({
@@ -63,7 +73,7 @@ exports.getProducts = (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
 
-  let productQuery = Product.find().sort({createdAt: 'descending'});
+  let productQuery = Product.find().sort({ createdAt: "descending" });
 
   if (pageSize && currentPage) {
     productQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
@@ -160,19 +170,16 @@ exports.updateProduct = async (req, res, next) => {
       isAvailable: true,
     });
     console.log(createdProduct);
-    Product.updateOne(
-      {_id: req.params.id },
-      createdProduct
-    ).then(result => {
+    Product.updateOne({ _id: req.params.id }, createdProduct).then((result) => {
       console.log(result);
       if (result.n > 0) {
         res.status(200).json({ message: "Update successful!" });
       } else {
         res.status(401).json({ message: "Not authorized!" });
       }
-    })
+    });
     console.log("result");
-   
+
     // if (result.n > 0) {
     //   res.status(200).json({ message: "Product Update successful!" });
     // } else {
@@ -198,4 +205,48 @@ exports.deleteProduct = async (req, res, next) => {
       message: "Deleting posts failed!",
     });
   }
+};
+
+exports.getProductsByCategory = (req, res, next) => {
+  const pageSize = +req.query.pagesize;
+  const currentPage = +req.query.page;
+  console.log("genre ", req.body.genre)
+  const {genre} = req.body;
+  let productQuery;
+
+  if(genre == "all"){
+     productQuery = Product.find().sort({
+      createdAt: "descending",
+    });
+  } else {
+     productQuery = Product.find({ genre: genre }).sort({
+      createdAt: "descending",
+    });
+  }
+
+  // let productQuery = Product.find({ genre: req.body.genre }).sort({
+  //   createdAt: "descending",
+  // });
+
+  if (pageSize && currentPage) {
+    productQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  }
+  productQuery
+    .then((documents) => {
+      fetchedProducts = documents;
+      return Product.count();
+    })
+    .then((count) => {
+      console.log(fetchedProducts);
+      res.status(200).json({
+        message: "Products fetched successfully!",
+        products: fetchedProducts,
+        maxProducts: count,
+      });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "Fetching products failed!",
+      });
+    });
 };

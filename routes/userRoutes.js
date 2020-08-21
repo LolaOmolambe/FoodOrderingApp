@@ -1,6 +1,7 @@
 const express = require("express");
 const userController = require("../controllers/userController");
 const authControllers = require("../controllers/authController");
+const contactControllers = require("../controllers/contactController");
 
 const router = express.Router();
 
@@ -20,10 +21,6 @@ router.patch(
   authControllers.protectRoutes,
   userController.updateMe
 );
-// router.patch(
-//   "/updatepassword",
-//   authControllers.protectRoutes,
-//   authControllers.updatePassword
-// );
+router.post("/contact", contactControllers.contactUs);
 
 module.exports = router;

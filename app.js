@@ -8,6 +8,7 @@ const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
 const userRoutes = require("./routes/userRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 require("./services/passport");
 
 const app = express();
@@ -38,12 +39,13 @@ app.use((req, res, next) => {
   next();
 });
 app.use(cors());
-console.log("apppppp");
+//console.log("apppppp");
 
 
 app.use("/api/user", authRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/order", orderRoutes);
+app.use("/api/admin", reportRoutes);
 
 module.exports = app;

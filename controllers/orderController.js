@@ -74,7 +74,7 @@ exports.getAllOrders = async (req, res, next) => {
   //   firstName: "$firstName",
   //   email: "$email",
   // };
-  let orderQuery = Order.find({}).sort({createdAt: 'descending'});
+  let orderQuery = Order.find({}).sort({ createdAt: "descending" });
 
   var countOrders = await Order.count();
   if (pageSize && currentPage) {
@@ -119,7 +119,9 @@ exports.getMyOrders = async (req, res, next) => {
   console.log("here");
 
   //let orderQuery = Order.find({ customer: req.userData.userId});
-  let orderQuery = OrderProduct.find({ customer: req.userData.userId }).sort({createdAt: 'descending'});
+  let orderQuery = OrderProduct.find({ customer: req.userData.userId }).sort({
+    createdAt: "descending",
+  });
 
   var countOrders = await OrderProduct.count({ customer: req.userData.userId });
   console.log(countOrders);
@@ -132,7 +134,10 @@ exports.getMyOrders = async (req, res, next) => {
 
   orderQuery
     .populate("product_id")
-    .populate("order_id")
+    .populate({
+      path: "order_id",
+      match: { status: { $ne: "Cancelled" } },
+    })
     .exec(function (error, result) {
       //console.log(result);
 
@@ -249,4 +254,3 @@ exports.getOrder = async (req, res, next) => {
     });
   }
 };
-

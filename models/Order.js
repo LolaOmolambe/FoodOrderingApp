@@ -10,7 +10,7 @@ const orderSchema = mongoose.Schema(
     status: {
       type: String,
       default: "Pending",
-      enum: ["Pending","Paid", "Processing", "Completed"],
+      enum: ["Pending","Paid", "Processing", "Completed", "Cancelled"],
     },
     grandTotal: {
       type: Number,
@@ -20,3 +20,5 @@ const orderSchema = mongoose.Schema(
 );
 
 module.exports = mongoose.model("Order", orderSchema);
+
+
