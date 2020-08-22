@@ -1,13 +1,10 @@
 const crypto = require("crypto");
 const User = require("./../models/User");
 const jwt = require("jsonwebtoken");
-//const { promisify } = require("util");
 
-//const sendEmail = require("../services/email");
 const Email = require("../services/email");
 
 const signToken = (user) => {
-  console.log("here");
   return jwt.sign(
     { email: user.email, userId: user._id, role: user.role },
 
@@ -20,22 +17,10 @@ const signToken = (user) => {
 
 exports.signup = async (req, res, next) => {
   try {
-    //console.log(req.body);
     const newUser = await User.create(req.body);
     const url = `${req.protocol}://${req.get("host")}/me`;
-    console.log(url);
-    //await new Email(newUser, url).sendWelcome();
 
     const token = signToken(newUser._id);
-
-    //Send to user
-    let message = "Welcome on Board";
-
-    // await sendEmail({
-    //   email: req.body.email,
-    //   subject: "Welcome to VegeFoods, we're glad to have you",
-    //   message,
-    // });
     await new Email(newUser, url).sendWelcome();
 
     res.status(201).json({
@@ -46,7 +31,6 @@ exports.signup = async (req, res, next) => {
       },
     });
   } catch (err) {
-    console.log(err);
     res.status(500).json({
       message: "Invalid Authorization Credentials",
     });
@@ -55,7 +39,6 @@ exports.signup = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
-  //console.log(req.body);
 
   //Chack if email and password exits
   if (!email || !password) {
@@ -66,16 +49,22 @@ exports.login = async (req, res, next) => {
   }
   try {
     //check if user exists and password is correct
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email })
+      .select("+password")
+      .select("+isActive");
 
     if (!user || !(await user.correctPassword(password, user.password))) {
       return res.status(401).json({
         message: "Incorrect email or password",
       });
     }
+    if (user.isActive == false) {
+      return res.status(401).json({
+        message: "Your Account has been deactivated",
+      });
+    }
 
     //If everything is fine, send token to client
-    //const token = signToken(user._id);
     const token = signToken(user);
     res.cookie("jwt", token, {
       expires: new Date(
@@ -115,7 +104,6 @@ exports.protectRoutes = async (req, res, next) => {
   try {
     //Verify token
     const decodedToken = jwt.verify(token, process.env.JWT_KEY);
-    console.log(decodedToken);
 
     //Check if user still exists
     const user = await User.findById(decodedToken.userId);
@@ -142,7 +130,6 @@ exports.protectRoutes = async (req, res, next) => {
 
     next();
   } catch (err) {
-    //handle expired session later
     res.status(401).json({ message: "Invalid token" });
   }
 };
@@ -243,7 +230,6 @@ exports.resetPassword = async (req, res, next) => {
 };
 
 exports.updatePassword = async (req, res, next) => {
-  console.log(req.body);
   //Get user from collection
   const user = await User.findById(req.userData.userId).select("+password");
 
@@ -270,8 +256,12 @@ exports.updatePassword = async (req, res, next) => {
 
 exports.googleSignIn = async (req, res, next) => {
   const { email, firstName, lastName } = req.body;
-  console.log(email, firstName, lastName);
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email }).select("+isActive");
+  if (existingUser.isActive == false) {
+    return res.status(401).json({
+      message: "Your Account has been deactivated",
+    });
+  }
   if (existingUser) {
     const token = signToken(existingUser);
     return res.status(200).json({
@@ -288,9 +278,8 @@ exports.googleSignIn = async (req, res, next) => {
         lastName: lastName,
         email: email,
       }).save({ validateBeforeSave: false });
-      
+
       const url = `${req.protocol}://${req.get("host")}/me`;
-      console.log(url);
 
       await new Email(user, url).sendWelcome();
 

@@ -1,7 +1,6 @@
 const express = require("express");
 const authController = require("./../controllers/authController");
 const router = express.Router();
-const passport = require("passport");
 
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
@@ -12,21 +11,6 @@ router.patch(
   "/updatepassword",
   authController.protectRoutes,
   authController.updatePassword
-);
-
-router.get(
-  "/auth/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-  })
-);
-
-router.get(
-  "/auth/google/callback",
-  passport.authenticate("google"),
-  (req, res) => {
-    res.send("Hello");
-  }
 );
 
 module.exports = router;

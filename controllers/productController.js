@@ -7,7 +7,6 @@ exports.createProduct = async (req, res, next) => {
     });
   }
 
-  //const { title } = req.body;
   let { title, price, genre, description } = req.body;
 
   if (!title || !title.trim()) {
@@ -36,17 +35,6 @@ exports.createProduct = async (req, res, next) => {
   }
 
   try {
-    //const url = req.protocol + "://" + req.get("host");
-    // let createdProduct = await new Product({
-    //   name: title,
-    //   price: price,
-    //   genre: genre,
-    //   description: description,
-    //   imagePath: url + "/images/" + req.file.filename,
-    // }).save();
-    console.log("file ", req.file);
-    console.log("file url", req.file.url);
-
     let createdProduct = await new Product({
       name: title,
       price: price,
@@ -115,7 +103,6 @@ exports.getProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
-    //console.log(product);
     if (!product) {
       return res.status(404).json({ message: "Product item not found!" });
     }
@@ -126,7 +113,6 @@ exports.updateProduct = async (req, res, next) => {
       });
     }
 
-    //let { price, genre, isAvailable } = req.body;
     let { price, genre } = req.body;
     let { title, imagePath, description } = req.body;
 
@@ -157,7 +143,6 @@ exports.updateProduct = async (req, res, next) => {
       const url = req.protocol + "://" + req.get("host");
       imagePath = url + "/images/" + req.file.filename;
     }
-    console.log("hereeee");
 
     let createdProduct = new Product({
       _id: req.body.id,
@@ -169,22 +154,13 @@ exports.updateProduct = async (req, res, next) => {
       //isAvailable: isAvailable,
       isAvailable: true,
     });
-    console.log(createdProduct);
     Product.updateOne({ _id: req.params.id }, createdProduct).then((result) => {
-      console.log(result);
       if (result.n > 0) {
         res.status(200).json({ message: "Update successful!" });
       } else {
         res.status(401).json({ message: "Not authorized!" });
       }
     });
-    console.log("result");
-
-    // if (result.n > 0) {
-    //   res.status(200).json({ message: "Product Update successful!" });
-    // } else {
-    //   res.status(401).json({ message: "Product Update unsuccessfull!" });
-    // }
   } catch (err) {
     res.status(500).json({
       message: "Couldn't update product!",
@@ -210,7 +186,7 @@ exports.deleteProduct = async (req, res, next) => {
 exports.getProductsByCategory = (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  console.log("genre ", req.body.genre)
+  
   const {genre} = req.body;
   let productQuery;
 
@@ -223,11 +199,7 @@ exports.getProductsByCategory = (req, res, next) => {
       createdAt: "descending",
     });
   }
-
-  // let productQuery = Product.find({ genre: req.body.genre }).sort({
-  //   createdAt: "descending",
-  // });
-
+  
   if (pageSize && currentPage) {
     productQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
@@ -237,7 +209,6 @@ exports.getProductsByCategory = (req, res, next) => {
       return Product.count();
     })
     .then((count) => {
-      console.log(fetchedProducts);
       res.status(200).json({
         message: "Products fetched successfully!",
         products: fetchedProducts,
@@ -250,3 +221,4 @@ exports.getProductsByCategory = (req, res, next) => {
       });
     });
 };
+

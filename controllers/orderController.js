@@ -1,12 +1,10 @@
 var mongoose = require("mongoose");
-
 const Order = require("../models/Order");
 const OrderProduct = require("../models/OrderProduct");
 const User = require("../models/User");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 exports.createOrder = async (req, res, next) => {
-  console.log("orders roit");
   if (Object.keys(req.body).length === 0) {
     return res.status(400).json({
       message: "Order content cannot be empty!",
@@ -15,10 +13,8 @@ exports.createOrder = async (req, res, next) => {
 
   var ordersBody = req.body.orders;
   var grandTotal = req.body.total;
-  //console.log("oredrdbpdy ", ordersBody);
 
   let ordersArray = [];
-  //let grandTotal = 0;
 
   const orders = await new Order({
     customer: req.userData.userId,
@@ -26,7 +22,6 @@ exports.createOrder = async (req, res, next) => {
   }).save();
 
   for (let item of ordersBody) {
-    console.log(item);
     let x = {
       order_id: orders._id,
       product_id: mongoose.Types.ObjectId(item.productId),
@@ -37,29 +32,17 @@ exports.createOrder = async (req, res, next) => {
     ordersArray.push(x);
   }
 
-  console.log(grandTotal);
-
-  //   var books = [{ name: 'Mongoose Tutorial', price: 10, quantity: 25 },
-  //                     { name: 'NodeJS tutorial', price: 15, quantity: 5 },
-  //                     { name: 'MongoDB Tutorial', price: 20, quantity: 2 }];
-
-  // save multiple documents to the collection referenced by Book Model
+  // save multiple documents to the collection referenced by Order Model
   OrderProduct.collection.insert(ordersArray, function (err, docs) {
     if (err) {
-      //return console.error(err);
       return res.status(500).json({
         message: "Order nor saved!",
       });
     } else {
-      console.log("Multiple documents inserted to Collection");
       return res.status(201).json({
         status: "success",
         message: "Order added successfully",
         orderId: orders._id,
-        //   post: {
-        //     ...createdProduct,
-        //    id: createdProduct._id,
-        //  },
       });
     }
   });
@@ -69,11 +52,6 @@ exports.getAllOrders = async (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
 
-  console.log("here");
-  // var resources = {
-  //   firstName: "$firstName",
-  //   email: "$email",
-  // };
   let orderQuery = Order.find({}).sort({ createdAt: "descending" });
 
   var countOrders = await Order.count();
@@ -82,55 +60,27 @@ exports.getAllOrders = async (req, res, next) => {
   }
 
   orderQuery.populate("customer").exec(function (error, result) {
-    //console.log(result);
-
-    console.log("orders ", countOrders);
-    //return res.json(result);
     return res.status(200).json({
       message: "Orders fetched successfully!",
       orders: result,
       maxOrders: countOrders,
     });
   });
-
-  // User.collection.aggregate([
-  //   {
-  //     $group: resources,
-  //   },
-  //   {
-  //     $lookup: {
-  //       from: "Order",
-  //       localField: "_id",
-  //       foreignField: "customer",
-  //       as: "orders",
-  //     },
-  //   },
-  // ], function (error, data) {
-  //   console.log("error ", error);
-  //   console.log("data ", data);
-  //   return res.json(data);
-  // });
 };
 
 exports.getMyOrders = async (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
 
-  console.log("here");
-
-  //let orderQuery = Order.find({ customer: req.userData.userId});
   let orderQuery = OrderProduct.find({ customer: req.userData.userId }).sort({
     createdAt: "descending",
   });
 
   var countOrders = await OrderProduct.count({ customer: req.userData.userId });
-  console.log(countOrders);
 
   if (pageSize && currentPage) {
     orderQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
-  //foreach orderquery, get the order items
-  //foreach
 
   orderQuery
     .populate("product_id")
@@ -139,10 +89,6 @@ exports.getMyOrders = async (req, res, next) => {
       match: { status: { $ne: "Cancelled" } },
     })
     .exec(function (error, result) {
-      //console.log(result);
-
-      console.log("orders ", result);
-      //return res.json(result);
       return res.status(200).json({
         message: "Orders fetched successfully!",
         orders: result,
@@ -175,15 +121,12 @@ exports.getCheckoutSession = async (req, res, next) => {
       ],
     });
 
-    console.log("session ", session);
     ////Create checkoutsession
     res.status(200).json({
       status: "success",
       session,
     });
-  } catch (err) {
-    console.log(err);
-  }
+  } catch (err) {}
 };
 
 exports.updateOrderStatus = async (req, res, next) => {
@@ -194,14 +137,7 @@ exports.updateOrderStatus = async (req, res, next) => {
       return res.status(404).json({ message: "Order not found!" });
     }
 
-    // if (Object.keys(req.body).length === 0) {
-    //   return res.status(400).json({
-    //     message: "Body content cannot be empty!",
-    //   });
-    // }
-
     let { status } = req.body;
-    console.log("updateBody ", status);
 
     if (!status || !status.trim()) {
       return res.status(400).json({
@@ -213,25 +149,13 @@ exports.updateOrderStatus = async (req, res, next) => {
       let result = await Order.findByIdAndUpdate(req.params.orderId, {
         status: status,
       });
-      console.log("result ", result);
+
       res
         .status(200)
         .json({ status: "success", message: "Update successful!" });
     } catch (err) {
-      console.log(err);
       res.status(401).json({ message: "Not authorized!" });
     }
-    //await User.findByIdAndUpdate(req.params.id, { isActive: true });
-
-    // (result) => {
-    //   console.log("result ", result);
-    //   if (result.n > 0) {
-    //
-    //   }
-    //   }
-    // }
-    //);
-    console.log("result");
   } catch (err) {
     res.status(500).json({
       message: "Couldn't update order!",
@@ -241,7 +165,6 @@ exports.updateOrderStatus = async (req, res, next) => {
 
 exports.getOrder = async (req, res, next) => {
   try {
-    console.log(req.params.orderId);
     let order = await Order.findById(req.params.orderId);
     if (order) {
       res.status(200).json(order);

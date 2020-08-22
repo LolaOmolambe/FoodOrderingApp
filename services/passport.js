@@ -4,7 +4,7 @@ const User = require("../models/User");
 
 
 const signToken = (user) => {
-  console.log("signTokem");
+ 
   return jwt.sign(
     { email: user.email, userId: user._id, role: user.role },
 
@@ -34,40 +34,9 @@ passport.use(
       // proxy: true
     },
     async (accessToken, refreshToken, profile, done) => {
-      console.log("herrrr");
-      console.log(accessToken);
-      console.log(refreshToken);
-      console.log(profile);
-      console.log(profile.emails[0].value);
+     
 
-      //const existingUser = await User.findOne({ googleId: profile.id });
-
-      // const existingUser = await User.findOne({ googleId: profile.id });
-
-      // if (existingUser) {
-      //   const token = signToken(existingUser);
-      //   return res.status(200).json({
-      //     status: "success",
-      //     token: token,
-      //     expiresIn: 3600,
-      //     userId: existingUser._id,
-      //     userRole: existingUser.role,
-      //   });
-
-      //   //return to jwt token
-      //   //return done(null, existingUser);
-      // } else {
-      //   const user = await new User({
-      //     googleId: profile.id,
-      //     firstname: profile.name.familyName,
-      //     lastName: profile.name.lastName,
-      //     email: profile.emails[0].value,
-      //   }).save();
-
-      //   let token = signToken(user._id);
-        
-      //   done(null, user);
-      //}
+      done(null)''
     }
   )
 );

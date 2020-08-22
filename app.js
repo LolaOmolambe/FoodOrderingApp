@@ -9,7 +9,7 @@ const productRoutes = require("./routes/productRoutes");
 const userRoutes = require("./routes/userRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const reportRoutes = require("./routes/reportRoutes");
-require("./services/passport");
+
 
 const app = express();
 mongoose
@@ -24,7 +24,7 @@ mongoose
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use("/images", express.static(path.join("images")));
-app.use(passport.initialize());
+//app.use(passport.initialize());
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -39,8 +39,6 @@ app.use((req, res, next) => {
   next();
 });
 app.use(cors());
-//console.log("apppppp");
-
 
 app.use("/api/user", authRoutes);
 app.use("/api/product", productRoutes);

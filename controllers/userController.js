@@ -5,7 +5,7 @@ exports.getAllUsers = (req, res, next) => {
   const currentPage = +req.query.page;
 
   const userQuery = User.find().select("+isActive").sort({createdAt: 'descending'});
-  //let userQuery = User.find();
+ 
   if (pageSize && currentPage) {
     userQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
@@ -27,12 +27,6 @@ exports.getAllUsers = (req, res, next) => {
       });
     });
 
-  // res.status(200).json({
-  //   status: "success",
-  //   data: {
-  //     users,
-  //   },
-  // });
 };
 
 const filterObj = (obj, ...allowedFields) => {
@@ -54,12 +48,10 @@ exports.updateMe = async (req, res, next) => {
       message: "Not for password update",
     });
   }
-  //console.log("user ", req.userData);
-  console.log("body ", req.body);
-
+ 
   //update user document
   const filteredBody = filterObj(req.body, "firstName", "lastName", "address", "phoneNumber");
-  console.log("filteredbody ",filteredBody);
+  
   const updatedUser = await User.findByIdAndUpdate(req.userData.userId, filteredBody, {
     new: true,
     runValidators: true,
@@ -74,7 +66,6 @@ exports.updateMe = async (req, res, next) => {
 };
 
 exports.deleteUser = async (req, res, next) => {
-  //await User.findByIdAndUpdate(req.user.id, { active: false });
   await User.findByIdAndUpdate(req.params.id, { isActive: false });
 
   res.status(204).json({
@@ -84,7 +75,6 @@ exports.deleteUser = async (req, res, next) => {
 };
 
 exports.activateUser = async (req, res, next) => {
-  //await User.findByIdAndUpdate(req.user.id, { active: false });
   await User.findByIdAndUpdate(req.params.id, { isActive: true });
 
   res.status(204).json({
