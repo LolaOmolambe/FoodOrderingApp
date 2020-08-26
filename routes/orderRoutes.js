@@ -6,7 +6,7 @@ const authControllers = require("../controllers/authController");
 const router = express.Router();
 
 router.post("", authControllers.protectRoutes, orderController.createOrder);
-router.get("", authControllers.protectRoutes, orderController.getAllOrders);
+router.get("", authControllers.protectRoutes, authControllers.restrictTo("admin"), orderController.getAllOrders);
 router.get("/myOrders", authControllers.protectRoutes, orderController.getMyOrders);
 
 router.get('/checkout-session/:orderId', authControllers.protectRoutes, orderController.getCheckoutSession);

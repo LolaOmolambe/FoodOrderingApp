@@ -21,6 +21,7 @@ router.put(
   "/:id",
    authControllers.protectRoutes,
    authControllers.restrictTo("admin"),
+   upload.single("image"),
   productController.updateProduct
 );
 

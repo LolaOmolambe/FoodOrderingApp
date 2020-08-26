@@ -12,8 +12,8 @@ router.get(
   userController.getAllUsers
 );
 
-router.get("/deactivateuser/:id", userController.deleteUser);
-router.get("/reactivateuser/:id", userController.activateUser);
+router.get("/deactivateuser/:id", authControllers.protectRoutes, authControllers.restrictTo("admin"), userController.deleteUser);
+router.get("/reactivateuser/:id",authControllers.protectRoutes, authControllers.restrictTo("admin"), userController.activateUser);
 
 router.get("", authControllers.protectRoutes, userController.getUser);
 router.patch(

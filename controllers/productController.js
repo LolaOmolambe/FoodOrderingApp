@@ -106,7 +106,7 @@ exports.updateProduct = async (req, res, next) => {
     if (!product) {
       return res.status(404).json({ message: "Product item not found!" });
     }
-
+    
     if (Object.keys(req.body).length === 0) {
       return res.status(400).json({
         message: "Body content cannot be empty!",
@@ -140,8 +140,7 @@ exports.updateProduct = async (req, res, next) => {
     }
 
     if (req.file) {
-      const url = req.protocol + "://" + req.get("host");
-      imagePath = url + "/images/" + req.file.filename;
+      imagePath = req.file.url;
     }
 
     let createdProduct = new Product({
@@ -186,20 +185,20 @@ exports.deleteProduct = async (req, res, next) => {
 exports.getProductsByCategory = (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  
-  const {genre} = req.body;
+
+  const { genre } = req.body;
   let productQuery;
 
-  if(genre == "all"){
-     productQuery = Product.find().sort({
+  if (genre == "all") {
+    productQuery = Product.find().sort({
       createdAt: "descending",
     });
   } else {
-     productQuery = Product.find({ genre: genre }).sort({
+    productQuery = Product.find({ genre: genre }).sort({
       createdAt: "descending",
     });
   }
-  
+
   if (pageSize && currentPage) {
     productQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
@@ -221,4 +220,3 @@ exports.getProductsByCategory = (req, res, next) => {
       });
     });
 };
-

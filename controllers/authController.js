@@ -235,7 +235,7 @@ exports.updatePassword = async (req, res, next) => {
 
   //Check if current password is correct
   if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
-    res.status(401).json({ message: "Your current password is wrong" });
+    return res.status(401).json({ message: "Your current password is wrong" });
   }
 
   //If sp, Update password
